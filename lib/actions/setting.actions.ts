@@ -3,9 +3,7 @@
 import { handleError, sanitizeSetting } from "../utils";
 import { connectToDatabase } from "../database";
 
-import Setting, {
-  ISetting,
-} from "../database/models/setting.model";
+import Setting, { ISetting } from "../database/models/setting.model";
 
 import { SettingParams } from "@/types";
 
@@ -87,20 +85,18 @@ export const createSetting = async (
   try {
     await connectToDatabase();
 
-    const existing = await Setting.findOne({
-      key: "global",
-    });
+    const existing = await Setting.findOne();
 
     if (existing) {
       throw new Error("Settings already exist");
     }
 
-    const setting = await Setting.create({
-      key: "global",
-      ...params,
-    });
+    const setting = await Setting.create(params);
 
-    return sanitizeSetting(setting.toObject());
+    cachedSetting = sanitizeSetting(setting.toObject());
+    cacheTimestamp = Date.now();
+
+    return structuredClone(cachedSetting);
   } catch (error) {
     handleError(error);
     return null;
@@ -121,14 +117,14 @@ export const getSetting = async (): Promise<ISetting | null> => {
 
     await connectToDatabase();
 
-    let setting = await Setting.findOne({
-      key: "global",
-    }).lean<ISetting>();
+    let setting = await Setting.findOne().lean<ISetting>();
 
     if (!setting) {
       setting = await Setting.findOneAndUpdate(
-        { key: "global" },
-        { $setOnInsert: DEFAULT_SETTING },
+        {},
+        {
+          $setOnInsert: DEFAULT_SETTING,
+        },
         {
           upsert: true,
           new: true,
@@ -162,7 +158,7 @@ export const upsertSetting = async (
     await connectToDatabase();
 
     const setting = await Setting.findOneAndUpdate(
-      { key: "global" },
+      {},
       {
         $set: updateData,
         $setOnInsert: DEFAULT_SETTING,
@@ -193,7 +189,7 @@ export const upsertSetting = async (
 // Clear Cache
 // ====================
 
-export const clearSettingCache = () => {
+export const clearSettingCache = async (): Promise<void> => {
   cachedSetting = null;
   cacheTimestamp = 0;
 };

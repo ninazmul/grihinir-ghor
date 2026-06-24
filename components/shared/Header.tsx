@@ -9,18 +9,14 @@ import NavItems from "./NavItems";
 import MobileNav from "./MobileNav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ISettingSafe } from "@/lib/database/models/setting.model";
 import { getSetting, isAdmin } from "@/lib/actions";
+import { ISetting } from "@/lib/database/models/setting.model";
 
-interface HeaderProps {
-  openSearch: () => void;
-}
-
-export default function Header({ openSearch }: HeaderProps) {
+export default function Header() {
   const { user } = useUser();
 
   const [adminStatus, setAdminStatus] = useState(false);
-  const [settings, setSettings] = useState<ISettingSafe | null>(null);
+  const [settings, setSettings] = useState<ISetting | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -64,15 +60,15 @@ export default function Header({ openSearch }: HeaderProps) {
         >
           <div className="relative w-12 md:w-14 h-12 md:h-14 rounded-md overflow-hidden">
             <Image
-              src={settings?.logo || "/assets/images/logo.png"}
+              src={settings?.branding.logo || "/assets/images/logo.png"}
               fill
               className="object-contain"
-              alt={settings?.name || "Logo"}
+              alt={settings?.branding.storeName || "Logo"}
               priority
             />
           </div>
           <span className="text-2xl md:text-4xl font-bold tracking-wide text-primary">
-            {settings?.name || "Virtual School"}
+            {settings?.branding.storeName || "Virtual School"}
           </span>
         </Link>
       </div>
@@ -80,16 +76,6 @@ export default function Header({ openSearch }: HeaderProps) {
       {/* Bottom Layer: Navigation, Search, Auth */}
       <div className="bg-primary text-white">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 px-6 py-2">
-          {/* Search */}
-          <div className="hidden md:flex flex-grow max-w-md">
-            <button
-              onClick={openSearch}
-              className="flex items-center gap-2 px-4 py-2 w-full rounded-full border border-white/40 text-white/80 hover:border-white hover:text-white transition"
-            >
-              <FaMagnifyingGlass />
-              <span className="text-sm">Search courses...</span>
-            </button>
-          </div>
 
           {/* Navigation */}
           <nav className="hidden lg:flex flex-grow justify-center">
