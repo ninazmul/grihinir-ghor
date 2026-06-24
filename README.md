@@ -1,1 +1,1 @@
-# ghanir-ghor
+# grihinir-ghor
