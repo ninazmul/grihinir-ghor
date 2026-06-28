@@ -20,6 +20,8 @@ import {
   ImageIcon,
   ShieldCheck,
   Settings,
+  ShoppingBag,
+  Truck,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,11 +36,25 @@ const sidebarItems = [
     roles: ["admin", "moderator"],
   },
   {
+    title: "Products",
+    url: "/dashboard/products",
+    icon: ShoppingBag,
+    roles: ["admin", "moderator"],
+  },
+  {
+    title: "Orders",
+    url: "/dashboard/orders",
+    icon: Truck,
+    roles: ["admin", "moderator"],
+  },
+  {
     title: "Courses",
     url: "/dashboard/courses",
     icon: GraduationCap,
     roles: ["admin", "moderator"],
   },
+
+
   {
     title: "Registrations",
     url: "/dashboard/registrations",
