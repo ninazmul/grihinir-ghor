@@ -4,13 +4,13 @@ import Hero from "./Hero";
 import Feedback from "./Feedback";
 import FAQ from "./FAQ";
 import Popup from "./Popup";
-import { ISetting } from "@/lib/database/models/setting.model";
+import { ISettingSafe } from "@/lib/database/models/setting.model";
 
 export default function Home({
   setting,
   // courses,
 }: {
-  setting: ISetting | null;
+  setting: ISettingSafe | null;
   // courses?: ICourseSafe[];
 }) {
   return (

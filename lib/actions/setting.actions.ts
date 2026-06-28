@@ -3,7 +3,7 @@
 import { handleError, sanitizeSetting } from "../utils";
 import { connectToDatabase } from "../database";
 
-import Setting, { ISetting } from "../database/models/setting.model";
+import Setting, { ISetting, ISettingSafe } from "../database/models/setting.model";
 
 import { SettingParams } from "@/types";
 
@@ -11,7 +11,7 @@ import { SettingParams } from "@/types";
 // Cache
 // ====================
 
-let cachedSetting: ISetting | null = null;
+let cachedSetting: ISettingSafe | null = null;
 let cacheTimestamp = 0;
 
 const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
@@ -81,7 +81,7 @@ const DEFAULT_SETTING: Partial<ISetting> = {
 
 export const createSetting = async (
   params: SettingParams,
-): Promise<ISetting | null> => {
+): Promise<ISettingSafe | null> => {
   try {
     await connectToDatabase();
 
@@ -107,7 +107,7 @@ export const createSetting = async (
 // Get Setting
 // ====================
 
-export const getSetting = async (): Promise<ISetting | null> => {
+export const getSetting = async (): Promise<ISettingSafe | null> => {
   try {
     const now = Date.now();
 
@@ -153,7 +153,7 @@ export const getSetting = async (): Promise<ISetting | null> => {
 
 export const upsertSetting = async (
   updateData: Partial<SettingParams>,
-): Promise<ISetting | null> => {
+): Promise<ISettingSafe | null> => {
   try {
     await connectToDatabase();
 

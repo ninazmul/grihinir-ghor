@@ -10,13 +10,13 @@ import MobileNav from "./MobileNav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSetting, isAdmin } from "@/lib/actions";
-import { ISetting } from "@/lib/database/models/setting.model";
+import { ISettingSafe } from "@/lib/database/models/setting.model";
 
 export default function Header() {
   const { user } = useUser();
 
   const [adminStatus, setAdminStatus] = useState(false);
-  const [settings, setSettings] = useState<ISetting | null>(null);
+  const [settings, setSettings] = useState<ISettingSafe | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {

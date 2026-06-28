@@ -5,6 +5,75 @@ export interface IFaqItem {
   answer: string;
 }
 
+export interface ISettingSafe {
+  _id: string;
+  name?: string;
+  logo?: string;
+  favicon?: string;
+  tagline?: string;
+  description?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  facebookGroup?: string;
+  youtube?: string;
+  returnPolicy?: string;
+  termsOfService?: string;
+  privacyPolicy?: string;
+  hero?: {
+    title?: string;
+    description?: string;
+    image?: string;
+    offerStartDate?: string;
+    offerEndDate?: string;
+  };
+  popup?: {
+    image?: string;
+    offerStartDate?: string;
+    offerEndDate?: string;
+  };
+  certificate?: string;
+  features?: {
+    badge?: string;
+    title?: string;
+    description?: string;
+    items?: {
+      title?: string;
+      description?: string;
+      icon?: string;
+    }[];
+  };
+  testimonials?: {
+    badge?: string;
+    title?: string;
+    description?: string;
+    totalEnrollment?: number;
+    totalSucceededStudents?: number;
+    totalIndustryExperts?: number;
+    feedbacks?: {
+      name?: string;
+      photo?: string;
+      rating?: number;
+      comment?: string;
+    }[];
+  };
+  faqs?: {
+    badge?: string;
+    title?: string;
+    description?: string;
+    items?: {
+      question?: string;
+      answer?: string;
+    }[];
+  };
+  maintenanceMode?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ISetting extends Document {
   _id: Types.ObjectId;
 

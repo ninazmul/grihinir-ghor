@@ -14,9 +14,6 @@ import { getSetting } from "@/lib/actions/setting.actions";
 import { ISettingSafe } from "@/lib/database/models/setting.model";
 import {
   LayoutDashboard,
-  GraduationCap,
-  ClipboardList,
-  ClipboardCheck,
   ImageIcon,
   ShieldCheck,
   Settings,
@@ -46,32 +43,6 @@ const sidebarItems = [
     url: "/dashboard/orders",
     icon: Truck,
     roles: ["admin", "moderator"],
-  },
-  {
-    title: "Courses",
-    url: "/dashboard/courses",
-    icon: GraduationCap,
-    roles: ["admin", "moderator"],
-  },
-
-
-  {
-    title: "Registrations",
-    url: "/dashboard/registrations",
-    icon: ClipboardList,
-    roles: ["admin", "moderator"],
-  },
-  {
-    title: "Quick Registration",
-    url: "/dashboard/applies",
-    icon: ClipboardCheck,
-    roles: ["admin", "moderator"],
-  },
-  {
-    title: "Gallery",
-    url: "/dashboard/gallery",
-    icon: ImageIcon,
-    roles: ["admin"],
   },
   {
     title: "Admins",
@@ -121,7 +92,7 @@ const AdminSidebar = ({ role }: { role?: string }) => {
                 />
               </div>
               <span className="text-lg font-bold text-primary">
-                {"NRBV School"}
+                {settings?.name || "Grihinir Ghor"}
               </span>
             </Link>
           </SidebarGroupLabel>

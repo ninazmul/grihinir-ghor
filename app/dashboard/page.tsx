@@ -1,14 +1,11 @@
 import {
   getAllAdmins,
-  getCourses,
-  getRegistrations,
   getSetting,
 } from "@/lib/actions";
 import DashboardClient from "./components/DashboardClient";
 import { IAdmin } from "@/lib/database/models/admin.model";
-import { ICourseSafe } from "@/lib/database/models/course.model";
-import { SerializedRegistration } from "@/lib/actions/registration.actions";
 import { resolveDashboardDateFilter } from "@/lib/dashboard-date-filter";
+import { getEcommerceDashboardStats } from "@/lib/ecommerce-dashboard.stats";
 
 type DashboardPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -31,20 +28,18 @@ export default async function DashboardPage({
       endDate: Array.isArray(endDateValue) ? endDateValue[0] : endDateValue,
     });
 
-    const [setting, admins, courses, registrations] =
+    const [setting, admins, ecommerceStats] =
       await Promise.all([
         getSetting(),
         getAllAdmins(),
-        getCourses({ tab: "all" }),
-        getRegistrations({ dateFilter }),
+        getEcommerceDashboardStats(dateFilter),
       ]);
 
     return (
       <DashboardClient
         setting={setting ?? null}
         admins={(admins ?? []) as IAdmin[]}
-        courses={(courses ?? []) as ICourseSafe[]}
-        registrations={(registrations ?? []) as SerializedRegistration[]}
+        ecommerceStats={ecommerceStats}
         dateFilter={dateFilter}
       />
     );
@@ -57,3 +52,4 @@ export default async function DashboardPage({
     );
   }
 }
+

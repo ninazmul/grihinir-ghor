@@ -12,14 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ICourseSafe } from "@/lib/database/models/course.model";
 import { IAdmin } from "@/lib/database/models/admin.model";
-import { SerializedRegistration } from "@/lib/actions/registration.actions";
 import { ISettingSafe } from "@/lib/database/models/setting.model";
 import {
   DashboardDateFilterResolved,
   DashboardDatePreset,
 } from "@/lib/dashboard-date-filter";
+import { EcommerceDashboardStats } from "@/lib/ecommerce-dashboard.stats";
 import {
   ResponsiveContainer,
   LineChart,
@@ -39,15 +38,9 @@ import {
 interface DashboardClientProps {
   setting: ISettingSafe | null;
   admins: IAdmin[];
-  courses: ICourseSafe[];
-  registrations: SerializedRegistration[];
+  ecommerceStats: EcommerceDashboardStats;
   dateFilter: DashboardDateFilterResolved;
 }
-
-type TrendPoint = {
-  label: string;
-  value: number;
-};
 
 function parseDateSafe(value?: string | null): Date | null {
   if (!value) return null;
@@ -67,43 +60,6 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function monthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function formatMonthLabel(value: string): string {
-  const [year, month] = value.split("-");
-  return new Date(Number(year), Number(month) - 1, 1).toLocaleString(
-    "default",
-    {
-      month: "short",
-      year: "numeric",
-    },
-  );
-}
-
-function buildMonthlySeries<T>(
-  items: T[],
-  getDate: (item: T) => string | null | undefined,
-  getValue: (item: T) => number,
-): TrendPoint[] {
-  const bucket: Record<string, number> = {};
-
-  items.forEach((item) => {
-    const date = parseDateSafe(getDate(item));
-    if (!date) return;
-    const key = monthKey(date);
-    bucket[key] = (bucket[key] ?? 0) + getValue(item);
-  });
-
-  return Object.entries(bucket)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => ({
-      label: formatMonthLabel(key),
-      value,
-    }));
-}
-
 const PRESET_OPTIONS: { value: DashboardDatePreset; label: string }[] = [
   { value: "today", label: "Today" },
   { value: "yesterday", label: "Yesterday" },
@@ -121,6 +77,7 @@ const PIE_COLORS = [
   "#f59e0b",
   "#22c55e",
   "#ef4444",
+  "#3b82f6",
 ];
 
 function MetricCard({
@@ -196,7 +153,7 @@ function MiniListCard({
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
         {children ? (
           children
         ) : (
@@ -210,8 +167,7 @@ function MiniListCard({
 export default function DashboardClient({
   setting,
   admins,
-  courses,
-  registrations,
+  ecommerceStats,
   dateFilter,
 }: DashboardClientProps) {
   const router = useRouter();
@@ -265,68 +221,6 @@ export default function DashboardClient({
     updateFilterParams(preset);
   };
 
-  const metrics = useMemo(() => {
-    const paid = registrations.filter((item) => item.paymentStatus === "Paid");
-    const pendingPayments = registrations.filter(
-      (item) => item.paymentStatus === "Pending",
-    );
-    const certified = registrations.filter(
-      (item) => item.certificateStatus === "Certified",
-    );
-    const notCertified = registrations.filter(
-      (item) => item.certificateStatus !== "Certified",
-    );
-    const totalRevenue = paid.reduce(
-      (sum, item) => sum + (item.paymentAmount ?? 0),
-      0,
-    );
-
-    return {
-      paidCount: paid.length,
-      pendingPaymentsCount: pendingPayments.length,
-      certifiedCount: certified.length,
-      notCertifiedCount: notCertified.length,
-      totalRevenue,
-    };
-  }, [registrations]);
-
-  const registrationTrend = useMemo<TrendPoint[]>(() => {
-    return buildMonthlySeries(
-      registrations,
-      (item) => item.createdAt,
-      () => 1,
-    );
-  }, [registrations]);
-
-  const revenueTrend = useMemo<TrendPoint[]>(() => {
-    return buildMonthlySeries(
-      registrations.filter((item) => item.paymentStatus === "Paid"),
-      (item) => item.createdAt,
-      (item) => item.paymentAmount ?? 0,
-    );
-  }, [registrations]);
-
-  const paymentStatusData = useMemo(
-    () => [
-      { name: "Paid", value: metrics.paidCount },
-      { name: "Pending", value: metrics.pendingPaymentsCount },
-    ],
-    [metrics.paidCount, metrics.pendingPaymentsCount],
-  );
-
-  const certificateStatusData = useMemo(
-    () => [
-      { name: "Certified", value: metrics.certifiedCount },
-      { name: "Not Certified", value: metrics.notCertifiedCount },
-    ],
-    [metrics.certifiedCount, metrics.notCertifiedCount],
-  );
-
-  const recentRegistrations = useMemo(
-    () => registrations.slice(0, 6),
-    [registrations],
-  );
-
   const canApplyCustom =
     preset !== "custom" ||
     (startDate.trim().length > 0 && endDate.trim().length > 0);
@@ -338,11 +232,10 @@ export default function DashboardClient({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-                {setting?.name ?? "Admin Dashboard"}
+                {setting?.branding?.storeName || "E-commerce Dashboard"}
               </h1>
               <p className="mt-1 text-sm text-slate-500">
-                Live overview of registrations, trainers, complaints, payments,
-                and certificates.
+                Live overview of sales, orders, courier delivery tracking, products, and inventory stock.
               </p>
             </div>
 
@@ -407,37 +300,60 @@ export default function DashboardClient({
           ) : null}
         </div>
 
+        {/* E-commerce Metric Cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard title="Registrations" value={registrations.length} />
           <MetricCard
-            title="Revenue"
-            value={`$ ${formatCurrency(metrics.totalRevenue)}`}
+            title="Total Revenue"
+            value={`$ ${formatCurrency(ecommerceStats.totals.totalRevenue)}`}
+            helper="Excludes cancelled/returned orders"
           />
-          <MetricCard title="Paid Registrations" value={metrics.paidCount} />
           <MetricCard
-            title="Pending Payments"
-            value={metrics.pendingPaymentsCount}
+            title="Total Orders"
+            value={ecommerceStats.totals.totalOrders}
+            helper="Within selected date range"
           />
-          <MetricCard title="Certified" value={metrics.certifiedCount} />
-          <MetricCard title="Not Certified" value={metrics.notCertifiedCount} />
-          <MetricCard title="Admins" value={admins.length} />
-          <MetricCard title="Courses" value={courses.length} />
+          <MetricCard
+            title="Pending Orders"
+            value={ecommerceStats.totals.pendingOrders}
+          />
+          <MetricCard
+            title="Delivered Orders"
+            value={ecommerceStats.totals.deliveredOrders}
+          />
+          <MetricCard
+            title="Total Products"
+            value={ecommerceStats.totals.totalProducts}
+          />
+          <MetricCard
+            title="Low Stock Alert"
+            value={ecommerceStats.totals.lowStockCount}
+            helper="Stock levels 1 to 5 items"
+          />
+          <MetricCard
+            title="Out of Stock"
+            value={ecommerceStats.totals.outOfStockCount}
+            helper="No stock remaining"
+          />
+          <MetricCard
+            title="Admins"
+            value={admins.length}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="xl:col-span-2 space-y-4">
             <ChartCard
               title="Revenue Trend"
-              subtitle="Monthly paid revenue in the selected range."
+              subtitle="Monthly revenue in the selected range (excludes cancelled/returned orders)."
             >
               <div className="h-[320px]">
-                {revenueTrend.length === 0 ? (
+                {ecommerceStats.revenueTrend.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-slate-500">
                     No revenue trend data in this range.
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={revenueTrend}>
+                    <LineChart data={ecommerceStats.revenueTrend}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="label" />
                       <YAxis />
@@ -464,17 +380,17 @@ export default function DashboardClient({
             </ChartCard>
 
             <ChartCard
-              title="Registration Trend"
-              subtitle="Monthly registration volume in the selected range."
+              title="Order Volume Trend"
+              subtitle="Monthly orders placed in the selected range."
             >
               <div className="h-[320px]">
-                {registrationTrend.length === 0 ? (
+                {ecommerceStats.orderTrend.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                    No registration trend data in this range.
+                    No order trend data in this range.
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={registrationTrend}>
+                    <BarChart data={ecommerceStats.orderTrend}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="label" />
                       <YAxis allowDecimals={false} />
@@ -482,7 +398,7 @@ export default function DashboardClient({
                       <Legend />
                       <Bar
                         dataKey="value"
-                        name="Registrations"
+                        name="Orders"
                         fill="#0f172a"
                         radius={[10, 10, 0, 0]}
                       />
@@ -494,81 +410,154 @@ export default function DashboardClient({
           </div>
 
           <div className="space-y-4">
-            <ChartCard title="Payment Status">
-              <div className="h-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={paymentStatusData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={80}
-                      paddingAngle={3}
-                    >
-                      {paymentStatusData.map((entry, index) => (
-                        <Cell
-                          key={entry.name}
-                          fill={PIE_COLORS[index % PIE_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+            <ChartCard title="Order Status Distribution">
+              <div className="h-[240px]">
+                {ecommerceStats.orderStatusDistribution.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                    No order status data.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={ecommerceStats.orderStatusDistribution}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={3}
+                      >
+                        {ecommerceStats.orderStatusDistribution.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={PIE_COLORS[index % PIE_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </ChartCard>
 
-            <ChartCard title="Certificate Status">
-              <div className="h-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={certificateStatusData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={80}
-                      paddingAngle={3}
-                    >
-                      {certificateStatusData.map((entry, index) => (
-                        <Cell
-                          key={entry.name}
-                          fill={PIE_COLORS[(index + 2) % PIE_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+            <ChartCard title="Payment Status Distribution">
+              <div className="h-[240px]">
+                {ecommerceStats.paymentStatusDistribution.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                    No payment status data.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={ecommerceStats.paymentStatusDistribution}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={3}
+                      >
+                        {ecommerceStats.paymentStatusDistribution.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={PIE_COLORS[(index + 3) % PIE_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </ChartCard>
           </div>
         </div>
 
-        <div>
+        {/* Bottom Section: Recent Orders & Top Selling Products */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <MiniListCard
-            title="Recent Registrations"
-            emptyText="No registrations for this range."
+            title="Recent Orders"
+            emptyText="No orders found."
           >
-            {recentRegistrations.length === 0
+            {ecommerceStats.recentOrders.length === 0
               ? null
-              : recentRegistrations.map((item) => (
+              : ecommerceStats.recentOrders.map((order) => (
                   <div
-                    key={item._id}
-                    className="rounded-2xl border border-slate-100 bg-white/60 p-4"
+                    key={order._id}
+                    className="flex justify-between items-center rounded-2xl border border-slate-100 bg-white/60 p-4 shadow-sm hover:shadow-md transition"
                   >
-                    <p className="font-semibold text-slate-900">
-                      {item.englishName ?? "Unnamed"}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {item.email ?? item.number ?? "-"}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {formatDate(item.createdAt)}
-                    </p>
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        Order #{order.orderId}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {order.customerName} ({order.customerPhone})
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {formatDate(order.createdAt)}
+                      </p>
+                    </div>
+                    <div className="text-right flex flex-col items-end">
+                      <p className="font-semibold text-indigo-600">
+                        ${formatCurrency(order.totalAmount)}
+                      </p>
+                      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase ${
+                        order.status === "Delivered"
+                          ? "bg-green-100 text-green-800"
+                          : order.status === "Cancelled" || order.status === "Returned"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+          </MiniListCard>
+
+          <MiniListCard
+            title="Top Selling Products"
+            emptyText="No product sales data found."
+          >
+            {ecommerceStats.topProducts.length === 0
+              ? null
+              : ecommerceStats.topProducts.map((product) => (
+                  <div
+                    key={product._id}
+                    className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/60 p-4 shadow-sm hover:shadow-md transition"
+                  >
+                    {product.image ? (
+                      <div className="relative w-12 h-12 rounded-lg overflow-hidden border bg-white flex-shrink-0">
+                        <img
+                          src={product.image}
+                          alt={product.title}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-xs text-slate-400 font-semibold flex-shrink-0">
+                        No Img
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-900 truncate">
+                        {product.title}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Price: ${formatCurrency(product.price)} | Stock: {product.stock}
+                      </p>
+                    </div>
+                    <div className="text-right flex flex-col items-end">
+                      <p className="font-semibold text-slate-900">
+                        {product.sold} sold
+                      </p>
+                      <p className="text-xs text-indigo-600 font-medium">
+                        Total: ${formatCurrency(product.revenue)}
+                      </p>
+                    </div>
                   </div>
                 ))}
           </MiniListCard>

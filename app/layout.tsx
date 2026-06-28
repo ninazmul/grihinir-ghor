@@ -17,48 +17,47 @@ const dmSerif = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: "NRB School | Canadian Authorized Assessment Institute",
+  title: "Grihinir Ghor | Your Home Essentials Store",
   description:
-    "NRB School is an Canadian authorized assessment institute committed to providing high-quality technical education, skills development, and certification services.",
+    "Grihinir Ghor is your trusted destination for premium home essentials, kitchen accessories, organic food, and handcrafted items.",
   keywords: [
-    "Technical Training",
-    "NSDA",
-    "BTEB",
-    "Skills Development",
-    "Vocational Education",
-    "Certification",
-    "NRB School",
+    "Home Essentials",
+    "Kitchen Accessories",
+    "Home Decor",
+    "Organic Food",
+    "Handcrafted Items",
+    "Grihinir Ghor",
   ],
-  metadataBase: new URL("https://www.nrbschool.com"),
+  metadataBase: new URL("https://www.grihinir-ghor.com"),
   icons: {
     icon: "./favicon.ico",
     shortcut: "./favicon.ico",
     apple: "/assets/images/placeholder.png",
   },
   alternates: {
-    canonical: "https://www.nrbschool.com/",
+    canonical: "https://www.grihinir-ghor.com/",
   },
   openGraph: {
-    title: "NRB School | NSDA & BTEB Authorized Assessment Institute",
+    title: "Grihinir Ghor | Your Home Essentials Store",
     description:
-      "NRB School empowers learners with accredited training programs and certifications under NSDA & BTEB authorization.",
-    url: "https://www.nrbschool.com/",
-    siteName: "NRB School",
+      "Grihinir Ghor offers premium home essentials, kitchen accessories, organic food, and handcrafted items for your home.",
+    url: "https://www.grihinir-ghor.com/",
+    siteName: "Grihinir Ghor",
     images: [
       {
-        url: "https://www.nrbschool.com/assets/images/placeholder.png",
+        url: "https://www.grihinir-ghor.com/assets/images/placeholder.png",
         width: 1200,
         height: 630,
-        alt: "NRB School",
+        alt: "Grihinir Ghor",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NRB School | NSDA & BTEB Authorized Assessment Institute",
+    title: "Grihinir Ghor | Your Home Essentials Store",
     description:
-      "Discover accredited training and certification opportunities at NRB School, authorized by NSDA & BTEB.",
+      "Discover premium home essentials and handcrafted items at Grihinir Ghor.",
     images: ["/assets/images/placeholder.png"],
   },
 };

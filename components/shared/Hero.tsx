@@ -10,7 +10,7 @@ import Link from "next/link";
 function Hero({ setting }: { setting: ISettingSafe | null }) {
   // Static fallback data
   const fallback = {
-    name: "NRB Virtual School",
+    name: "Grihinir Ghor",
     hero: {
       title: "Shaping Tomorrow’s Leaders, With Flexible Online Programs!",
       description:
